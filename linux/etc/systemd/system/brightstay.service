@@ -1,0 +1,12 @@
+[Unit]
+Description=Adjust L22i-40 Monitor Brightness
+After=graphical.target suspend.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/BrightStay.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=suspend.target
