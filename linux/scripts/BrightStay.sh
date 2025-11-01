@@ -14,6 +14,8 @@ change_brightness() {
 if ddcutil detect | grep -q $PRODUCT_CODE; then
     # If connected, change the brightness
     change_brightness
+    exit 0
 else
     echo "External monitor with Product Code $PRODUCT_CODE not connected."
+    exit 0
 fi
