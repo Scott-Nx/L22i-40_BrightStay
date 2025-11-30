@@ -1,6 +1,6 @@
 # L22i-40 BrightStay
 
-PowerShell utility designed to fix a firmware issue on the L22i-40 monitor. When the monitor wakes from sleep mode while in a custom user color mode (custom RGB settings), it incorrectly resets its brightness level to 100%. This tool detects the monitor state and reapplies the desired brightness setting automatically, preserving your calibration and preventing unwanted brightness jumps.
+The utility designed to fix a firmware issue on the L22i-40 monitor. When the monitor wakes from sleep mode while in a custom user color mode (custom RGB settings), it incorrectly resets its brightness level to 100%. This tool detects the monitor state and reapplies the desired brightness setting automatically, preserving your calibration and preventing unwanted brightness jumps.
 
 ## How it works
 
@@ -10,9 +10,14 @@ PowerShell utility designed to fix a firmware issue on the L22i-40 monitor. When
 
 ## Requirements
 
+### Windows:
 - PowerShell 5.1 or PowerShell 7+
 - PowerShell module: MonitorConfig (from PowerShell Gallery)
 - DDC/CI enabled on your monitor (Hold button for a few seconds to toggle)
+
+### Linux:
+- systemd
+- ddcutil
 
 If your system enforces script signing, ensure your execution policy allows running this tool use `-ExecutionPolicy Bypass` in task action.
 
