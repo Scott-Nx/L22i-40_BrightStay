@@ -1,32 +1,35 @@
 # L22i-40 BrightStay
 
-The utility designed to fix a firmware issue on the L22i-40 monitor. When the monitor wakes from sleep mode while in a custom user color mode (custom RGB settings), it incorrectly resets its brightness level to 100%. This tool detects the monitor state and reapplies the desired brightness setting automatically, preserving your calibration and preventing unwanted brightness jumps.
+The utility designed to fix a firmware issue on the L22i-40 monitor. When the monitor wakes from sleep mode while in a custom user color mode (custom RGB settings), it incorrectly resets its brightness level to 100%. This tool detects the monitor state and re-applies the color preset (VCP code 0x14) to restore the correct brightness and RGB Range settings automatically, preserving your calibration and preventing unwanted brightness jumps.
 
 ## How it works
 
 - Detects when the display resumes from sleep or the workstation unlocks.
-- Reapplies brightness level it to the L22i-40 using the MonitorConfig module.
+- Re-applies the color preset (VCP 0x14, Value 11) to restore brightness and fix RGB Range issues on the L22i-40 using the MonitorConfig module.
+- This method is more effective than directly setting brightness and also resolves RGB Range problems (similar approach works in Linux with ddcutil).
 - Run manually or via Task Scheduler so it can react reliably after wake/unlock events.
 
 ## Requirements
 
 ### Windows:
+
 - PowerShell 5.1 or PowerShell 7+
 - PowerShell module: MonitorConfig (from PowerShell Gallery)
 - DDC/CI enabled on your monitor (Hold button for a few seconds to toggle)
 
 ### Linux:
+
 - systemd
-- ddcutil
+- ddcutil (for sending VCP commands to re-apply color preset)
 
 If your system enforces script signing, ensure your execution policy allows running this tool use `-ExecutionPolicy Bypass` in task action.
 
 ## Install the MonitorConfig module
 
-1) Open an elevated PowerShell prompt if required by your environment.
-2) Install the module from the PowerShell Gallery:
+1. Open an elevated PowerShell prompt if required by your environment.
+2. Install the module from the PowerShell Gallery:
 
-    Install-Module MonitorConfig
+   Install-Module MonitorConfig
 
 Verify installation:
 
@@ -45,26 +48,31 @@ Uninstall:
 You can run the script after installing MonitorConfig. Typical options:
 
 - Manual run (ad-hoc):
-
   - Open PowerShell.
   - Run the main script in this repository (adjust the path to match your checkout).
 
     Example pattern:
-        `pwsh -File .\path\to\YourMainScript.ps1`
-         or
-        `powershell.exe -File .\path\to\YourMainScript.ps1`
+    `pwsh -File .\windows\scripts\BrightStay.ps1`
+    or
+    `powershell.exe -File .\windows\scripts\BrightStay.ps1`
+
+- Toggle scheduled task on/off:
+  - Run the script with the `-Toggle` parameter to enable or disable the scheduled task:
+    `powershell.exe -File .\windows\scripts\BrightStay.ps1 -Toggle`
+  - This will show a message box indicating whether the task was enabled or disabled.
+  - Useful for temporarily disabling the fix without deleting the scheduled task.
 
 - Schedule to run after wake/unlock (recommended):
-
   - Create a Scheduled Task that triggers:
     - On workstation unlock, and/or
     - On resume from sleep (Power-Troubleshooter event or built-in Resume triggers).
   - Set the Action to run PowerShell with script:
-        `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\path\to\YourMainScript.ps1"`
+    `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\path\to\BrightStay.ps1"`
   - Run only when user is logged on (require session 1).
   - Run with highest privileges.
 
 Notes:
+
 - If you have multiple monitors, ensure the script targets the correct display ID. The MonitorConfig module typically exposes commands to enumerate and select displays—verify the monitor selection logic in the script.
 - If DDC/CI is disabled in the monitor OSD, brightness commands will not take effect.
 - Some docking stations or GPU drivers can block or proxy DDC/CI. If brightness is not applied, try connecting directly to the GPU or testing with a different cable/port.
@@ -84,7 +92,10 @@ Notes:
 
 - Confirm DDC/CI control:
 
-  Use MonitorConfig commands to enumerate displays and attempt a small brightness change to validate that the channel works.
+  Use MonitorConfig commands to enumerate displays and attempt a VCP feature change to validate that the channel works. For example:
+
+      Get-Monitor
+      Set-MonitorVcpFeature -Monitor "LogicalDisplayID" -VCPCode 0x14 -Value 11
 
 ## Security considerations
 
