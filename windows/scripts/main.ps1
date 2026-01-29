@@ -3,43 +3,46 @@ param(
     [switch]$toggle
 )
 
-# Task Scheduler toggle functionality
-if ($Toggle) {
+if ($toggle) {
     Add-Type -AssemblyName System.Windows.Forms
     $taskName = "BrightStay"
     $taskPath = "\NChalapinyo\"
 
     try {
         $task = Get-ScheduledTask -TaskName $taskName -TaskPath $taskPath -ErrorAction Stop
+        $isDisabled = $task.State -eq 'Disabled'
 
-        if ($task.State -eq 'Disabled') {
+        if ($isDisabled) {
             Enable-ScheduledTask -TaskName $taskName -TaskPath $taskPath | Out-Null
-            [System.Windows.Forms.MessageBox]::Show("BrightStay task is now enabled.", "Task Scheduler", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+            $message = "BrightStay task is now enabled."
         } else {
             Disable-ScheduledTask -TaskName $taskName -TaskPath $taskPath | Out-Null
-            [System.Windows.Forms.MessageBox]::Show("BrightStay task is now disabled.", "Task Scheduler", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+            $message = "BrightStay task is now disabled."
         }
+
+        [System.Windows.Forms.MessageBox]::Show($message, "Task Scheduler", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
     } catch {
-        [System.Windows.Forms.MessageBox]::Show("Failed to toggle task: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        [System.Windows.Forms.MessageBox]::Show("Failed to toggle task: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
     }
 
-    exit
+    exit 0
 }
 
-# Default behavior: Monitor brightness/color preset fix
-# Get all monitors and find the one matching the specific InstanceName
-$monitor = Get-Monitor | Where-Object { $_.InstanceName -eq "DISPLAY\LEN67AE\5&16e23401&0&UID277" }
+$targetInstanceName = "DISPLAY\LEN67AE\5&16e23401&0&UID277"
+$vcpCode = 0x14
+$vcpValue = 11
 
-# Check if the monitor was found
-if ($monitor) {
-    Write-Host "Monitor found: $($monitor.FriendlyName)"
+try {
+    # Use -ErrorAction Stop for faster failure detection
+    $monitor = Get-Monitor -ErrorAction Stop | Where-Object { $_.InstanceName -eq $targetInstanceName } | Select-Object -First 1
 
-    # Extract the LogicalDisplay value
-    $logicalDisplay = $monitor.LogicalDisplay
+    if ($monitor -and $monitor.LogicalDisplay) {
+        # Apply Color Preset (VCP 0x14, Value 11) to restore brightness and fix RGB Range
+        Set-MonitorVcpValue -Monitor $monitor.LogicalDisplay -VCPCode $vcpCode -Value $vcpValue -ErrorAction Stop
+        exit 0
+    }
 
-    # Re-apply Color Preset (VCP 0x14, Value 11) to restore brightness and fix RGB Range
-    Write-Host "Re-applying color preset for monitor: $logicalDisplay"
-    Set-MonitorVcpValue -Monitor "$logicalDisplay" -VCPCode 0x14 -Value 11
-} else {
-    Write-Host "Monitor with the specified InstanceName not found."
+    exit 1
+} catch {
+    exit 1
 }
