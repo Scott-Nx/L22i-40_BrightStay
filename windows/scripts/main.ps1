@@ -14,10 +14,10 @@ if ($toggle) {
 
         if ($isDisabled) {
             Enable-ScheduledTask -TaskName $taskName -TaskPath $taskPath | Out-Null
-            $message = "BrightStay task is now enabled."
+            $message = "BrightStay now enabled"
         } else {
             Disable-ScheduledTask -TaskName $taskName -TaskPath $taskPath | Out-Null
-            $message = "BrightStay task is now disabled."
+            $message = "BrightStay now disabled"
         }
 
         [System.Windows.Forms.MessageBox]::Show($message, "Task Scheduler", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
